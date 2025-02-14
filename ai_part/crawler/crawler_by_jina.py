@@ -21,8 +21,7 @@ def jina_request(url: str, authorization_token: str) -> Union[requests.Response,
     if not url or not authorization_token:
         raise ValueError("URL和授权令牌不能为空")
 
-    base_url = "https://r.jina.ai/"
-    full_url = base_url + url
+    full_url = os.getenv("JINA_URL") + url
 
     headers = {"Authorization": f"Bearer {authorization_token}"}
 

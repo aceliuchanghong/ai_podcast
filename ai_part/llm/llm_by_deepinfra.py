@@ -48,7 +48,7 @@ if __name__ == "__main__":
     """
     python ai_part/llm/llm_by_deepinfra.py
     """
-    prompt = "What is the capital of France?"
+    prompt = "你好?"
     client = OpenAI(api_key=os.getenv("API_KEY"), base_url=os.getenv("BASE_URL"))
     xx = get_llm_answer(prompt, client)
     logger.info(colored(f"{xx}", "green"))

@@ -126,7 +126,6 @@ def send_text_to_speech(
         print(f"{output_file} already exists.")
         return output_file
 
-    url = "https://api.deepinfra.com/v1/inference/hexgrad/Kokoro-82M"
     headers = {
         "Authorization": "bearer " + os.getenv("API_KEY"),
         "Content-Type": "application/json",
@@ -138,7 +137,9 @@ def send_text_to_speech(
         "speed": 1.0,
         "stream": False,
     }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response = requests.post(
+        os.getenv("KOKORO_URL"), headers=headers, data=json.dumps(data)
+    )
 
     logger.info(
         colored(
@@ -167,6 +168,6 @@ if __name__ == "__main__":
     python ai_part/tts/kokoro_by_deepinfra.py
     """
     text = "How could you know? It's an unanswerable question. Like asking an unborn child if they'll lead a good life. They haven't even been born."
-    preset_voice_num = 1
+    preset_voice_num = 0
 
     audio_content = send_text_to_speech(text, preset_voice_num)

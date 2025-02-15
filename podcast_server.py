@@ -7,7 +7,7 @@ from openai import OpenAI
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import wave
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -31,8 +31,21 @@ def get_wav_duration(file_path):
         return duration
 
 
-def format_time_span(duration):
-    end_time = timedelta(seconds=duration)
+def format_time_span(duration, last_duration_end_time_str="00:00:00"):
+    # 将 last_duration_end_time_str 转换为 timedelta 对象
+    if last_duration_end_time_str != "00:00:00":
+        last_duration_end_time = datetime.strptime(
+            last_duration_end_time_str, "%H:%M:%S"
+        )
+        last_duration_timedelta = timedelta(
+            hours=last_duration_end_time.hour,
+            minutes=last_duration_end_time.minute,
+            seconds=last_duration_end_time.second,
+        )
+        end_time = timedelta(seconds=duration) + last_duration_timedelta
+    else:
+        end_time = timedelta(seconds=duration)
+
     hours, remainder = divmod(end_time.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     end_time_str = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"

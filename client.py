@@ -30,8 +30,8 @@ def generate_speech(api_key, model, input_text, voice):
 if __name__ == "__main__":
     # python client.py
     api_key = os.getenv("podcast_api_key")
-    model = "kokoro-82M"
-    # model = "podcast"
+    # model = "kokoro-82M"
+    model = "podcast"
     input_text = "Today is a wonderful day to build something people love!"
     voice = "bella"
 

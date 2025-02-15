@@ -101,6 +101,7 @@ def send_text_to_speech(
     text: str,
     preset_voice_num: int = 0,
     output_file_destination: str = "no_git_oic",
+    file_name: str = "output.wav",
 ) -> str:
     """
     将文本转换为语音并保存为 WAV 文件。
@@ -153,6 +154,8 @@ def send_text_to_speech(
     )
 
     # 保存音频文件
+    if file_name != "output.wav":
+        output_file = file_name
     save_base64_wav(response.json().get("audio"), output_file)
 
     if response.status_code == 200:

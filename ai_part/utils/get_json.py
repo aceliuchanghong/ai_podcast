@@ -24,6 +24,12 @@ def _custom_parser(multiline_string: str) -> str:
     if isinstance(multiline_string, (bytes, bytearray)):
         multiline_string = multiline_string.decode()
 
+    # Convert single-quoted keys to double-quoted keys
+    multiline_string = re.sub(r"'(\w+)'", r'"\1"', multiline_string)
+
+    # Convert single-quoted values to double-quoted values
+    multiline_string = re.sub(r":\s*'([^']*)'", r': "\1"', multiline_string)
+
     multiline_string = re.sub(
         r'("action_input"\:\s*")(.*?)(")',
         _replace_new_line,
@@ -188,12 +194,10 @@ def parse_and_check_json_markdown(
 
 
 if __name__ == "__main__":
+    # python ai_part/utils/get_json.py
     text = """```json\n{"name":"张三", "age": 27, "爱好": ["羽毛球"""
     text2 = """
-    {
-  "question": "合同里面SOB或者SOA编号是？格式是SOB20...",
-  "answer": "SOB202102-14875"
-} 以上就是结果
+    {'translate_result': 'iPad 呢？'}
     """
     text3 = """
         ```json{
@@ -202,7 +206,8 @@ if __name__ == "__main__":
     }``` 以上就是结果
         """
     xx = parse_json_markdown(text)
-    print(type(xx))
     print(xx)
     yy = parse_and_check_json_markdown(text3, ["question", "answer"])
     print(f"yy:{yy}")
+    zz = parse_json_markdown(text2)
+    print(zz)

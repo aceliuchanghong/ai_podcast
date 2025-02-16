@@ -17,19 +17,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 CHOICES = [
-    "af_bella",
+    "af_bella",  # 0
     "af_alloy",
     "af_aoede",
     "af_heart",
     "af_jessica",
     "af_kore",
-    "af_nicole",
+    "af_nicole",  # 6
     "af_nova",
     "af_river",
     "af_sarah",
     "af_sky",
-    "am_adam",
-    "am_echo",
+    "am_adam",  # 11
+    "am_echo",  # 12
     "am_eric",
     "am_fenrir",
     "am_liam",
@@ -94,7 +94,7 @@ def save_base64_wav(base64_string, output_file_path):
     with open(output_file_path, "wb") as wav_file:
         wav_file.write(wav_data)
 
-    print(f"WAV 文件已保存到: {output_file_path}")
+    # print(f"WAV 文件已保存到: {output_file_path}")
 
 
 def send_text_to_speech(
@@ -142,20 +142,21 @@ def send_text_to_speech(
         os.getenv("KOKORO_URL"), headers=headers, data=json.dumps(data)
     )
 
-    logger.info(
-        colored(
-            f"\n"
-            f"request_id: {response.json()['request_id']}\n"
-            f"inference_status: {response.json()['inference_status']}\n"
-            f"input_character_length: {response.json()['input_character_length']}\n"
-            f"output_format: {response.json()['output_format']}",
-            "green",
-        )
-    )
+    # logger.info(
+    #     colored(
+    #         f"\n"
+    #         f"request_id: {response.json()['request_id']}\n"
+    #         f"inference_status: {response.json()['inference_status']}\n"
+    #         f"input_character_length: {response.json()['input_character_length']}\n"
+    #         f"output_format: {response.json()['output_format']}",
+    #         "green",
+    #     )
+    # )
 
     # 保存音频文件
     if file_name != "output.wav":
         output_file = file_name
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
     save_base64_wav(response.json().get("audio"), output_file)
 
     if response.status_code == 200:

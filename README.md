@@ -97,6 +97,8 @@ curl http://127.0.0.1:21500/v1/audio/speech \
 # 设定环境变量 
 ~/.bashrc ==> export JINA_API_KEY=
 ~/.bashrc ==> export API_KEY=
+source ~/.bashrc
+apt-get install ffmpeg libavcodec-extra
 git clone https://github.com/aceliuchanghong/ai_podcast
 uv venv
 source .venv/bin/activate

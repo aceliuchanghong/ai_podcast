@@ -10,6 +10,7 @@ import wave
 from datetime import timedelta, datetime
 from pydub import AudioSegment
 import json
+import time
 
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -93,6 +94,7 @@ class PodcastServer(ls.LitAPI):
             ]
         # 如果是podcast 正式启动服务
         if request["model"] == "podcast":
+            start_time = time.time()
             # 获取待获取文章的list
             article_list = parse_got_list_api(
                 os.getenv("podcast_site_url"),
@@ -109,26 +111,30 @@ class PodcastServer(ls.LitAPI):
 
                 article_code = compute_mdhash_id(article["title"])
                 # 获取文章内容
+                logger.info(colored(f"2.爬虫开始获取文章", "green"))
                 today_article_content = jina_request(
                     url=article["url"],
                     authorization_token=os.getenv("JINA_API_KEY"),
                 )
-                logger.info(colored(f"2.爬虫获取文章内容成功", "green"))
+                logger.info(colored(f"3.开始获取文章剧本", "green"))
                 # 获取剧本
                 script_list = get_sentense_list(today_article_content, self.client)
                 if len(script_list) <= 2:
                     raise ValueError(
                         f"{article["url"]}:剧本内容为空\narticle:{article}"
                     )
+                for script in script_list:
+                    print(f"{script}")
                 # 获取音频
+                logger.info(colored(f"4.开始获取音频...", "green"))
                 gen_wav_list = []
                 for script in script_list:
                     if script[0].lower() == "bella":
                         preset_voice_num = 0
-                    elif script[0].lower() == "nicole":
+                    elif script[0].lower() == "adam":
                         preset_voice_num = 12
                     else:
-                        raise ValueError(f"speaker:{script[0]} not in [bella,nicole]")
+                        raise ValueError(f"speaker:{script[0]} not in [bella,adam]")
                     audio_path = send_text_to_speech(
                         text=script[1],
                         preset_voice_num=preset_voice_num,
@@ -137,7 +143,6 @@ class PodcastServer(ls.LitAPI):
                     trans = trans_sentense(script[1], self.client, "中文")
                     gen_wav_list.append((script[0], script[1], audio_path, trans))
                 logger.info(colored(f"{gen_wav_list}", "green"))
-                logger.info(colored(f"3.获取音频成功", "green"))
 
                 # 合并音频 并且输出结果 list
                 last_duration_end_time_str = "00:00:00"
@@ -150,7 +155,7 @@ class PodcastServer(ls.LitAPI):
 
                 for gen_wav in gen_wav_list:
                     """
-                    [('Nicole', "Hey Bella, have you heard about that?", 'no_git_oic/cac9a94.wav', '嘿，贝拉，你听说了吗？'),...]
+                    [('Adam', "Hey Bella, have you heard about that?", 'no_git_oic/cac9a94.wav', '嘿，贝拉，你听说了吗？'),...]
                     """
                     audio_segment = AudioSegment.from_wav(gen_wav[2])
                     combined_audio += audio_segment
@@ -180,8 +185,11 @@ class PodcastServer(ls.LitAPI):
                         "",
                     ),
                 )
-            logger.info(colored("4.合并音频成功", "green"))
+            logger.info(colored("5.合并音频成功", "green"))
             logger.info(colored(f"{today_article_list}", "green"))
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            logger.info(colored(f"此文章生成播客共耗时: {elapsed_time:.2f}秒", "green"))
 
             return today_article_list
         else:

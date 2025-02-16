@@ -32,7 +32,7 @@ from ai_part.tts.kokoro_by_deepinfra import compute_mdhash_id
 
 def parse_dialogue(dialogue_str):
     # 定义正则表达式模式
-    pattern = re.compile(r"(\d+\.\s+)?(Nicole|Bella):\s*(.*)")
+    pattern = re.compile(r"(\d+\.\s+)?(Adam|Bella):\s*(.*)")
 
     # 初始化结果列表
     dialogue_list = []
@@ -63,7 +63,7 @@ def parse_got_list_api(url: str, nums: int = 2) -> list:
             # logger.info(colored(f"成功获取数据: {data['data'][:nums]}", "green"))
             alredy_post_list = execute_sqlite_sql(select_all_url_sql)
             alredy_post_list = [item[0] for item in alredy_post_list]
-            logger.info(colored(f"{alredy_post_list}", "green"))
+            logger.info(colored(f"已生成的:{alredy_post_list}", "green"))
             filtered_data = [
                 item for item in data["data"] if item["url"] not in alredy_post_list
             ]
@@ -116,16 +116,16 @@ def get_sentense_list(
     if language not in ["中文", "英文"]:
         raise ValueError("只支持中文和英文剧本")
     prompt = (
-        f"将领导提供的新闻内容转化为 Nicole 与 Bella 对话的{language}剧本:\narticle_content:\n```"
+        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的{language}剧本:\narticle_content:\n```"
         + article_content
         + "```\n"
         + "1.不要有除了剧本内容以外的文字输出\n"
         + "2.剧本内容有价值,需要言之有物\n"
         + "3.output-example:\n"
         + "```\n"
-        + "1. Nicole: Hey Bella, have you heard about Apple's upcoming product launch next Thursday?\n"
+        + "1. Adam: Hey Bella, have you heard about Apple's upcoming product launch next Thursday?\n"
         + "2. Bella: Oh, you mean the one where Tim Cook sent out the invitation letter a week early? I'm really curious about what they're calling the “new family member.”\n"
-        + "3. Nicole: Exactly! It's generating a lot of buzz. They haven't announced the specific date or location, so it's likely they'll release product videos instead of a live event, similar to what they did with the M4 Mac last November.\n"
+        + "3. Adam: Exactly! It's generating a lot of buzz. They haven't announced the specific date or location, so it's likely they'll release product videos instead of a live event, similar to what they did with the M4 Mac last November.\n"
         + "4. Bella: That makes sense. What are the main products they're expected to launch?\n"
         + "```\n"
     )
@@ -154,7 +154,7 @@ def get_sentense_list(
 
     logger.error("达到最大重试次数，解析对话失败")
     return [
-        ("Nicole", "I don't really feel like talking this time."),
+        ("Adam", "I don't really feel like talking this time."),
         ("Bella", "Oh, fine, maybe next time."),
     ]
 

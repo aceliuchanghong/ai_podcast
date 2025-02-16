@@ -9,7 +9,6 @@ from typing import Optional
 import time
 import re
 
-
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -26,6 +25,9 @@ sys.path.insert(
 
 from ai_part.utils.get_json import parse_and_check_json_markdown
 from ai_part.crawler.crawler_by_jina import jina_request
+from ai_part.utils.sql_sentence import *
+from ai_part.utils.check_db import execute_sqlite_sql
+from ai_part.tts.kokoro_by_deepinfra import compute_mdhash_id
 
 
 def parse_dialogue(dialogue_str):
@@ -50,7 +52,7 @@ def parse_dialogue(dialogue_str):
     return dialogue_list
 
 
-def parse_got_list_api(url: str, nums: int = 5) -> list:
+def parse_got_list_api(url: str, nums: int = 2) -> list:
     """
     [{'title': '苹果下周最大的惊喜', 'hot': '538.00热度', 'url': 'https://36kr.com/p/3167297655974408', 'mobil_url': 'https://m.36kr.com/p/3167297655974408', 'index': 1},...]
     """
@@ -59,7 +61,21 @@ def parse_got_list_api(url: str, nums: int = 5) -> list:
         if response.status_code == 200:
             data = response.json()
             # logger.info(colored(f"成功获取数据: {data['data'][:nums]}", "green"))
-            return data["data"][:nums]
+            alredy_post_list = execute_sqlite_sql(select_all_url_sql)
+            alredy_post_list = [item[0] for item in alredy_post_list]
+            logger.info(colored(f"{alredy_post_list}", "green"))
+            filtered_data = [
+                item for item in data["data"] if item["url"] not in alredy_post_list
+            ]
+
+            result_data_list = filtered_data[:nums]
+            for item in result_data_list:
+                code = compute_mdhash_id(item["title"])
+                execute_sqlite_sql(
+                    insert_basic_info_sql,
+                    (item["title"], item["url"], code, ""),
+                )
+            return result_data_list
         else:
             logger.error(f"请求失败，状态码：{response.status_code}, URL: {url}")
             print(f"请求失败，状态码：{response.status_code}")
@@ -104,7 +120,8 @@ def get_sentense_list(
         + article_content
         + "```\n"
         + "1.不要有除了剧本内容以外的文字输出\n"
-        + "2.output-example:\n"
+        + "2.剧本内容有价值,需要言之有物\n"
+        + "3.output-example:\n"
         + "```\n"
         + "1. Nicole: Hey Bella, have you heard about Apple's upcoming product launch next Thursday?\n"
         + "2. Bella: Oh, you mean the one where Tim Cook sent out the invitation letter a week early? I'm really curious about what they're calling the “new family member.”\n"
@@ -144,24 +161,29 @@ def get_sentense_list(
 
 if __name__ == "__main__":
     # python ai_part/utils/tools.py
-    client = OpenAI(api_key=os.getenv("API_KEY"), base_url=os.getenv("BASE_URL"))
-    article_list = parse_got_list_api(os.getenv("podcast_site_url"), 1)
-    logger.info(colored(f"文章列表:{article_list}", "green"))
 
-    for article in article_list:
-        article_info = {}
-        # 获取文章标题
-        article_info["title"] = article["title"]
-        article_info["detail"] = []
-        article_info["file_path"] = "init"
-        # 获取文章内容
-        today_article_content = jina_request(
-            url=article["url"],
-            authorization_token=os.getenv("JINA_API_KEY"),
-        )
-        # logger.info(colored(f"文章内容:{today_article_content}", "green"))
-        result = get_sentense_list(today_article_content, client)
-        logger.info(colored(f"剧本内容:{result}", "green"))
+    # client = OpenAI(api_key=os.getenv("API_KEY"), base_url=os.getenv("BASE_URL"))
+
+    # article_list = parse_got_list_api(os.getenv("podcast_site_url"), 1)
+    # logger.info(colored(f"文章列表:{article_list}", "green"))
+
+    # for article in article_list:
+    #     article_info = {}
+    #     # 获取文章标题
+    #     article_info["title"] = article["title"]
+    #     article_info["detail"] = []
+    #     article_info["file_path"] = "init"
+    #     # 获取文章内容
+    #     today_article_content = jina_request(
+    #         url=article["url"],
+    #         authorization_token=os.getenv("JINA_API_KEY"),
+    #     )
+    #     # logger.info(colored(f"文章内容:{today_article_content}", "green"))
+    #     result = get_sentense_list(today_article_content, client)
+    #     logger.info(colored(f"剧本内容:{result}", "green"))
 
     # xx = trans_sentense("拐卖中国演员王星的团伙全员被捕", client, "英文")
     # logger.info(colored(f"{xx}", "green"))
+
+    article_list = parse_got_list_api(os.getenv("podcast_site_url"), 1)
+    logger.info(colored(f"文章列表:{article_list}", "green"))

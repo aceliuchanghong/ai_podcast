@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import wave
 from datetime import timedelta, datetime
 from pydub import AudioSegment
+import json
 
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -22,6 +23,8 @@ logger = logging.getLogger(__name__)
 from ai_part.tts.kokoro_by_deepinfra import send_text_to_speech, compute_mdhash_id
 from ai_part.crawler.crawler_by_jina import jina_request
 from ai_part.utils.tools import parse_got_list_api, trans_sentense, get_sentense_list
+from ai_part.utils.sql_sentence import *
+from ai_part.utils.check_db import execute_sqlite_sql
 
 
 def get_wav_duration(file_path):
@@ -95,7 +98,7 @@ class PodcastServer(ls.LitAPI):
                 os.getenv("podcast_site_url"),
                 int(os.getenv("podcast_article_post_nums")),
             )
-            logger.info(colored(f"文章列表:{article_list}", "green"))
+            logger.info(colored(f"1.获取文章列表成功,文章列表:{article_list}", "green"))
             today_article_list = []
             for article in article_list:
                 article_info = {}
@@ -110,7 +113,7 @@ class PodcastServer(ls.LitAPI):
                     url=article["url"],
                     authorization_token=os.getenv("JINA_API_KEY"),
                 )
-                # logger.info(colored(f"文章内容:{today_article_content}", "green"))
+                logger.info(colored(f"2.爬虫获取文章内容成功", "green"))
                 # 获取剧本
                 script_list = get_sentense_list(today_article_content, self.client)
                 if len(script_list) <= 2:
@@ -134,6 +137,7 @@ class PodcastServer(ls.LitAPI):
                     trans = trans_sentense(script[1], self.client, "中文")
                     gen_wav_list.append((script[0], script[1], audio_path, trans))
                 logger.info(colored(f"{gen_wav_list}", "green"))
+                logger.info(colored(f"3.获取音频成功", "green"))
 
                 # 合并音频 并且输出结果 list
                 last_duration_end_time_str = "00:00:00"
@@ -167,6 +171,16 @@ class PodcastServer(ls.LitAPI):
                 article_info["file_path"] = final_output_path
                 today_article_list.append(article_info)
 
+                execute_sqlite_sql(
+                    insert_detail_info_sql,
+                    (
+                        article_code,
+                        json.dumps(article_info["detail"], ensure_ascii=False),
+                        final_output_path,
+                        "",
+                    ),
+                )
+            logger.info(colored("4.合并音频成功", "green"))
             logger.info(colored(f"{today_article_list}", "green"))
 
             return today_article_list
@@ -190,6 +204,8 @@ if __name__ == "__main__":
     python podcast_server.py
     nohup python podcast_server.py > no_git_oic/podcast_server.log 2>&1 &
     """
+    execute_sqlite_sql(create_basic_table_sql)
+    execute_sqlite_sql(create_detail_table_sql)
     api = PodcastServer()
     server = ls.LitServer(api, api_path="/v1/audio/speech")
     server.run(port=int(os.getenv("podcast_port", 21500)))

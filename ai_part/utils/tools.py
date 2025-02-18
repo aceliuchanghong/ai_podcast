@@ -116,7 +116,7 @@ def get_sentense_list(
     if language not in ["中文", "英文"]:
         raise ValueError("只支持中文和英文剧本")
     prompt = (
-        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的{language}剧本:\narticle_content:\n```"
+        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的纯{language}剧本,不要出现任何其他语言:\narticle_content:\n```"
         + article_content
         + "```\n"
         + "1.不要有除了剧本内容以外的文字输出\n"

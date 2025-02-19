@@ -23,6 +23,20 @@ def parse_json2xyz(json_data):
     return "\n".join(result)
 
 
+def fill_xyz(daily_tts_list):
+    daily_tts = daily_tts_list[0]
+
+    title = daily_tts["title"]
+    file_path = daily_tts["file_path"]
+    detail = parse_json2xyz(daily_tts["detail"])
+
+    print("Title:", title)
+    print("File Path:", file_path)
+    print("detail:\n", detail)
+
+    return title, file_path, detail
+
+
 if __name__ == "__main__":
     json_data = [
         {

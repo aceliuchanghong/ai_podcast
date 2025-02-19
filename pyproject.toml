@@ -13,3 +13,5 @@ dependencies = [
     "requests>=2.32.3",
     "termcolor>=2.5.0",
 ]
+[tool.setuptools]
+py-modules = []

@@ -87,10 +87,8 @@ def get_url_response(url, accessToken):
     headers = {"x-jike-access-token": accessToken}
 
     response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response
-    else:
-        raise Exception(f"401失败-cookie过期: {response.status_code}")
+
+    return response
 
 
 def post_url_response(url, accessToken, refreshToken=None):

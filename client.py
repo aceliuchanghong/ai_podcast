@@ -23,8 +23,9 @@ def generate_speech(api_key, model, input_text, voice):
 
     if response.status_code == 200:
         logger.info(colored(f"{response.text}", "green"))
+        return response.json()
     else:
-        print(f"Error: {response.status_code} - {response.text}")
+        raise Exception(f"Failed to generate speech: {response.text}")
 
 
 if __name__ == "__main__":

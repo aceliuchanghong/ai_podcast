@@ -14,10 +14,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from upload_part.xyz.login.cookie_getter import (
+from upload_part.xyz.cookie_getter import (
     send_login_request,
     complete_login_with_verify_code,
     get_url_response,
+    refresh_tokens,
 )
 
 
@@ -32,12 +33,16 @@ def xyz_main():
     complete_login_url = os.getenv("xyz_complete_login_url")
     check_url = os.getenv("xyz_check_url")
     need_login = True
+    refresh_success = False
 
     if not phone_number:
         logger.error(colored("Phone number not provided in environment.", "red"))
         return
 
     token_file = "no_git_oic/xyz_token.json"
+    if os.path.exists(os.path.dirname(token_file)):
+        os.makedirs(os.path.dirname(token_file), exist_ok=True)
+
     if os.path.exists(token_file):
         with open(token_file, "r") as f:
             try:
@@ -46,12 +51,25 @@ def xyz_main():
                 refresh_token = tokens.get("refreshToken")
                 if check_token_expiration(access_token, check_url):
                     need_login = False
+                else:
+                    try:
+                        access_token, refresh_token = refresh_tokens(
+                            os.getenv("xyz_refresh_url"), access_token, refresh_token
+                        )
+                        logger.info(colored(f"刷新token成功", "green"))
+                        need_login = False
+                        refresh_success = True
+                    except Exception as e:
+                        logger.info(colored(f"刷新token失败", "green"))
             except json.JSONDecodeError:
                 logger.warning(
                     colored(
                         "0.Failed to read token file, proceeding with login.", "yellow"
                     )
                 )
+    if refresh_success:
+        with open(token_file, "w") as f:
+            json.dump({"accessToken": access_token, "refreshToken": refresh_token}, f)
     if need_login:
         while True:
             still_login = input(
@@ -62,8 +80,8 @@ def xyz_main():
             elif still_login == "no":
                 return
             else:
-                logger.warning(colored("Only yes/no, please re-enter.", "yellow"))
-        logger.info(colored(f"\n\n\n1. {phone_number} starting login", "green"))
+                logger.warning(colored("Only yes/no, please re-fill.", "yellow"))
+        logger.info(colored(f"1. {phone_number} starting login", "green"))
 
         login_request = send_login_request(phone_number, send_login_request_url)
         if login_request:

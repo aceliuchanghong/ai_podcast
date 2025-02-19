@@ -90,7 +90,7 @@ def get_url_response(url, accessToken):
     if response.status_code == 200:
         return response
     else:
-        raise Exception(f"请求失败: {response.status_code}")
+        raise Exception(f"401失败-cookie过期: {response.status_code}")
 
 
 def post_url_response(url, accessToken, refreshToken=None):
@@ -109,23 +109,26 @@ def post_url_response(url, accessToken, refreshToken=None):
     if response.status_code == 200:
         return response
     else:
-        raise Exception(f"请求失败: {response.status_code}")
+        raise Exception(f"401失败-cookie过期: {response.status_code}")
 
 
 # 示例调用
 if __name__ == "__main__":
     # python upload_part/xyz/login/cookie_getter.py
-    mobile_phone_number = os.getenv("MOBILE_NUMBER")  # "18221023652"
+    mobile_phone_number = os.getenv("MOBILE_NUMBER")
     send_login_request_url = os.getenv("xyz_send_code_url")
     complete_login_url = os.getenv("xyz_complete_login_url")
-    set_cookie_url = os.getenv("xyz_set_cookie_url")
     check_url = os.getenv("xyz_check_url")
-    verify_code = "8976"
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoia054ak10MzZYV1MzOUR0amM0cG96QUFxK0luamNWM2JOUnVFNnVCNTlrNWlHRTFTR1A5ZWJoQXl3TW9cL21GRmNsUjJEUENvYnFIWG9sZUp3YjFQVUhQUVBBYVVHaVYzbHl4UjlTS3JMckIwNU01RVV2Mmt3ZHZwc1VhQmF3azMzK09aRUNIc1Z2aEFJdUo1WXduYm44aVRBU2U2OXJxV3JwTWlySXBNcUhjd1pmN1pLbEpnaVpSZXZIQ3hFazJTSE5kUFF3alZNT1NTOER0STJpcUtYMTVGdUxzaEhNOUlVNXRSS25QWm1pdTg4b3I5OVdcL2ptU1ZHVVpRVUVmbEFLQ0NBeE1cL3RaOG95MzJxYUNtcFwvbzh0bkZtbkVsZXpFdDl2aUtJMllVRXdmTlB0TlhYZEdvazIzcVIycldTMTlHY1wvU3c2ZVwvaXB1QW5iVUE4WERkUkJcL1l5YXlEMW0rS3lWYnZ6K0hsd2VrST0iLCJ2IjozLCJpdiI6IkNrWCtXdkJZZXMzUmFwSjdqQVFnU0E9PSIsImlhdCI6MTczOTg4ODIwNy45NjV9.vagi3CV_v2cbYvda0Gj2kokArmDOmUd0d0bG6WH1IV4"
+    verify_code = "2670"
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiclN2XC9EaWxDXC9NSUdVcExHWHpTK1U1NGJaVFNnOVwvMEpWdnBPQ09KTGgyd1IzTWN5XC9cL2VJb20yRkJicW54Q0k1bzlxakk5OGorQ1g2NFA5cHg0dUFwZFNxRFZwd2lEczZwUWxmVmJnK0lBcFk0VnJPT2xsd3J2VFBLcjNreDJYRjE0M0lGSWlxRXd6ZU4rRTdKcVBzMFVzam51N0p4UFN6amVRREhPXC9Ib3ZhVjkyTm5NS25Fd3NxSnFndUFmMk5SZ01sOWFpeVZDN0ZpUVpjU0V1a0hxUWpTMFY1WEtGM3RvZU51M3BSRkk5OWZOdGhHcE5pUWsydnBEaHBPMjBVbUN4SFFZYjVSZXhBQjQzZHdHanZ5NXp5VUxQcmoyZW1RVkphSEFRT1VnOFR5cDdoYU92bnlIWWlDK3BzUVk4WnJUR0xmSlNEN1VNWE94Q3hNRGduQWVnY2dDWVwvSnFXeXQzODNJMjNnOVRlYz0iLCJ2IjozLCJpdiI6InJQNit3TFNtVHMxdStFV3ZNMGtWeWc9PSIsImlhdCI6MTczOTkyNzI4Ni4xNDF9._5QhApeW89mFHju6tcm2d5tqg8evJ16uZzqYXvY7Cxw"
 
     # response = send_login_request(mobile_phone_number, send_login_request_url)
+
     # accessToken, refreshToken = complete_login_with_verify_code(
     #     mobile_phone_number, complete_login_url, verify_code
+    # )
+    # logger.info(
+    #     colored(f"accessToken:{accessToken}\nrefreshToken:{refreshToken}", "green")
     # )
 
     response = get_url_response(check_url, token)

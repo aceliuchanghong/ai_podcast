@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import logging
 from termcolor import colored
 import json
+import math
 
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -76,6 +77,15 @@ def get_url_response(url, accessToken):
     return response
 
 
+def post_response(url, authorization, data=None):
+
+    headers = {"authorization": authorization}
+
+    response = requests.post(url, headers=headers, json=data)
+
+    return response
+
+
 def refresh_tokens(url, accessToken, refreshToken):
     headers = {
         "x-jike-access-token": accessToken,
@@ -121,8 +131,80 @@ if __name__ == "__main__":
             "green",
         )
     )
+
     # check
-    response = get_url_response(check_url, access_token)
+    # response = get_url_response(check_url, access_token)
+    # print(f"{response.json()}")
+
+    # ready to upload 获取token QTmM-Cgln
+    ready_upload_url = os.getenv("xyz_ready_upload_url")
+    response = get_url_response(ready_upload_url, access_token)
+    print(f"{response.json()}")
+
+    token = response.json()["token"]
+    token_ak = response.json()["token"].split(":")[0]
+    # 似乎没什么用
+    # ready_upload_url2 = os.getenv("xyz_ready_upload_url2")
+    # response = get_url_response(ready_upload_url2.replace("?ak=","?ak=" + token_ak), access_token)
+    # print(f"{response.json()}")
+
+    # 获取 uploadId
+    upload_url = os.getenv("xyz_upload_url")
+    response = post_response(upload_url, "UpToken " + token)
+    print(f"{response.json()}")
+
+    uploadId = response.json()["uploadId"]
+    file_path = "no_git_oic/fcd32c7027c455e28b1879fc719df0f8.wav"
+    # 计算该文件需要多少次put
+    chunk_size = 2 * 1024 * 1024
+    file_size = os.path.getsize(file_path)
+    num_chunks = math.ceil(file_size / chunk_size)
+    print(f"文件大小: {file_size} 字节")
+    print(f"分片大小: {chunk_size} 字节")
+    print(f"总分片数: {num_chunks}")
+    parts = []
+    with open(file_path, "rb") as file:
+        for i in range(num_chunks):
+            # 计算当前分片的偏移量和大小
+            offset = i * chunk_size
+            bytes_to_read = min(chunk_size, file_size - offset)
+            # 最后一个分片可能小于 chunk_size
+            # 读取分片数据
+            file.seek(offset)
+            chunk_data = file.read(bytes_to_read)
+            # 构造当前分片的 URL
+            current_url = upload_url + "/" + uploadId + "/" + str(i + 1)
+            try:
+                # 发送 PUT 请求
+                response = requests.put(
+                    current_url,
+                    data=chunk_data,
+                    headers={"authorization": "UpToken " + token},
+                )
+                if response.status_code == 200:
+                    print(f"分片 {i + 1}/{num_chunks} 上传成功")
+                    ans_dict = {"etag": response.json()["etag"], "partNumber": i + 1}
+                    parts.append(ans_dict)
+            except requests.exceptions.RequestException as e:
+                print(f"分片 {i + 1}/{num_chunks} 上传失败: {e}")
+                break
+    # 合并post
+    last_wav_post_dict = {"parts": parts, "fname": os.path.basename(file_path)}
+    response = post_response(
+        upload_url + "/" + uploadId, "UpToken " + token, last_wav_post_dict
+    )
+    print(f"{response.json()}")
+
+    all_create = {}
+    all_create["pid"] = "67b1b39b675981bb8243a940"
+    all_create["title"] = os.path.basename(file_path).replace(".wav", "")
+    all_create["file"] = response.json()["file"]
+
+    create_url = os.getenv("xyz_create_url")
+    # 最后页面create
+    response = requests.post(
+        create_url, headers={"x-jike-access-token": access_token}, json=all_create
+    )
     print(f"{response.json()}")
 
     # logger.info(colored(f"{refresh_url}", "green"))

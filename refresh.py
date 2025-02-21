@@ -130,6 +130,6 @@ def xyz_main():
 
 if __name__ == "__main__":
     """
-    python main.py
+    python refresh.py
     """
     xyz_main()

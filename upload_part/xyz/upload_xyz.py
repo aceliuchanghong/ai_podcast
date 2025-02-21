@@ -82,12 +82,56 @@ def upload_wav(access_token, file_path):
         create_url, headers={"x-jike-access-token": access_token}, json=all_create
     )
     logger.info(colored(f"6. create 任务成功", "green"))
-    # print(f"{response.json()}")
+    # 似乎是需要的返回信息
+    print(f"{response.json()}")
     return True
 
 
-def upload_pic():
-    pass
+def upload_pic(access_token, img_file_path):
+    # 获取 upload token
+    ready_upload_url = os.getenv("xyz_ready_upload_url2")
+    token_response = get_url_response(ready_upload_url, access_token)
+    token = token_response.json()["token"]
+    logger.info(colored(f"1. upload token:{token[:10]}", "green"))
+
+    # 准备上传
+    upload_url = os.getenv("xyz_upload_url2")
+    with open(img_file_path, "rb") as file:
+        img_data = file.read()
+        # 如果大于10MB,返回失败
+        if len(img_data) >= 10 * 1024 * 1024:
+            logger.error(colored(f"图片大于等于10MB", "red"))
+            return False
+        data = {"token": token, "fname": os.path.basename(img_file_path)}
+        files = {
+            "file": (
+                os.path.basename(img_file_path),
+                img_data,
+                "image/jpeg",
+            )
+        }
+        # Send the POST request
+        image_post_response = requests.post(upload_url, data=data, files=files)
+        if image_post_response.status_code != 200:
+            logger.error(colored(f"图片上传失败:{image_post_response}", "red"))
+            return False
+        logger.info(colored(f"2. 图片上传成功", "green"))
+
+    # 最后页面create
+    image_post_response = image_post_response.json()
+    all_create = {}
+    all_create["pid"] = os.getenv("bella_pid")
+    all_create["title"] = os.path.basename(img_file_path).split(".")[0]
+    all_create["file"] = image_post_response["file"]
+
+    create_url = os.getenv("xyz_create_url")
+    response = requests.post(
+        create_url, headers={"x-jike-access-token": access_token}, json=all_create
+    )
+    logger.info(colored(f"3. create 任务成功", "green"))
+    # 似乎是需要的返回信息
+    print(f"{response.json()}")
+    return True
 
 
 def upload_task():
@@ -101,5 +145,9 @@ if __name__ == "__main__":
         tokens = json.load(f)
         access_token = tokens.get("accessToken")
     # logger.info(colored(f"\naccess:{access_token}", "green"))
-    file_path = "no_git_oic/30a987b14288d08b697d1b996a3929dc.wav"
-    upload_wav(access_token, file_path)
+
+    # wav_file_path = "no_git_oic/30a987b14288d08b697d1b996a3929dc.wav"
+    # upload_wav(access_token, wav_file_path)
+
+    img_file_path = "no_git_oic/pics/friru.jpg"
+    upload_pic(access_token, img_file_path)

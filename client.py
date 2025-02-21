@@ -14,10 +14,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_speech(api_key, model, input_text, voice):
+def generate_speech(api_key, model, input_text=None, voice=None):
     url = "http://127.0.0.1:21500/v1/audio/speech"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"model": model, "input": input_text, "voice": voice}
+    if not input_text and not voice:
+        data = {"model": model, "input": input_text, "voice": voice}
+    else:
+        data = {"model": model}
 
     response = requests.post(url, headers=headers, json=data)
 

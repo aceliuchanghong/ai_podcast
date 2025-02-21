@@ -176,20 +176,27 @@ class PodcastServer(ls.LitAPI):
                 article_info["file_path"] = final_output_path
                 today_article_list.append(article_info)
 
+                max_index_list = execute_sqlite_sql(select_max_index_detail_info_sql)
+                if len(max_index_list) == 0:
+                    max_index = 1
+                else:
+                    max_index = max_index_list[0][0]
                 execute_sqlite_sql(
                     insert_detail_info_sql,
                     (
                         article_code,
+                        int(max_index) + 1,
                         json.dumps(article_info["detail"], ensure_ascii=False),
                         final_output_path,
                         "",
                     ),
                 )
-            logger.info(colored("5.合并音频成功", "green"))
+                logger.info(colored("5.合并音频成功", "green"))
+
             logger.info(colored(f"{today_article_list}", "green"))
             end_time = time.time()
             elapsed_time = end_time - start_time
-            logger.info(colored(f"此文章生成播客共耗时: {elapsed_time:.2f}秒", "green"))
+            logger.info(colored(f"此播客生成共耗时: {elapsed_time:.2f}秒", "green"))
 
             return today_article_list
         else:

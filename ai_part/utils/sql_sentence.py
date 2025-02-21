@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS ai_podcast_basic_info (
 create_detail_table_sql = """
 CREATE TABLE IF NOT EXISTS ai_podcast_detail_info (
   code TEXT, 
+  index_num TEXT,
   detail TEXT, 
   file_path TEXT, 
   remark TEXT
@@ -31,15 +32,30 @@ VALUES (?, ?, ?, ?)
 insert_detail_info_sql = """
 INSERT INTO ai_podcast_detail_info (
   code, 
+  index_num,
   detail, 
   file_path, 
   remark
 ) 
-VALUES (?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?)
 """
 
 # select
 select_all_url_sql = """
 SELECT url
 FROM ai_podcast_basic_info
+"""
+
+select_max_index_detail_info_sql = """
+SELECT MAX(index_num)
+FROM ai_podcast_detail_info
+where remark = 'upload_suc'
+"""
+
+
+# update
+update_detail_info_sql = """
+Update ai_podcast_detail_info 
+set remark = 'upload_suc' 
+where file_path = ?
 """

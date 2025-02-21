@@ -17,7 +17,10 @@ sys.path.insert(
     0,
     os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../")),
 )
+
 from upload_part.xyz.cookie_getter import *
+from ai_part.utils.sql_sentence import *
+from ai_part.utils.check_db import execute_sqlite_sql
 
 
 def upload_wav(access_token, file_path):
@@ -82,8 +85,9 @@ def upload_wav(access_token, file_path):
         create_url, headers={"x-jike-access-token": access_token}, json=all_create
     )
     logger.info(colored(f"6. create 任务成功", "green"))
-    # 似乎是需要的返回信息
-    print(f"{response.json()}")
+    # 数据库更新
+    execute_sqlite_sql(update_detail_info_sql, (file_path,))
+    logger.info(colored(f"7. 数据库更新成功", "green"))
     return True
 
 

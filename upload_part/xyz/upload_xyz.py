@@ -134,8 +134,52 @@ def upload_pic(access_token, img_file_path):
     return True
 
 
-def upload_task():
-    pass
+def upload_task(access_token, task_notes_dict):
+    logger.info(colored(f"1. 数据库获取应上传文件信息成功", "green"))
+    get_list_url = os.getenv("xyz_list_url")
+    create_task_url = os.getenv("xyz_task_create")
+
+    wav_dict_payload = {
+        "skip": 0,
+        "pid": os.getenv("bella_pid"),
+        "limit": 1000,
+        "type": "AUDIO",
+    }
+    pic_dict_payload = {
+        "skip": 0,
+        "pid": os.getenv("bella_pid"),
+        "limit": 1000,
+        "type": "IMAGE",
+    }
+    # 获取已上传文件列表
+    headers = {"x-jike-access-token": access_token}
+    wav_list = requests.post(get_list_url, headers=headers, json=wav_dict_payload)
+    pic_list = requests.post(get_list_url, headers=headers, json=pic_dict_payload)
+    logger.info(
+        colored(
+            f"2. total_wav:{len(wav_list.json()["data"])},total_pic:{len(pic_list.json()["data"])}, 网站选中文件成功",
+            "green",
+        )
+    )
+
+    # 准备上传
+    title = task_notes_dict.get("title")
+    shownotes = task_notes_dict.get("shownotes")
+    audioFile = wav_list.json()["data"][0]["audioFile"]
+    image = pic_list.json()["data"][0]["imageFile"]
+
+    task_payload = {
+        "title": title,
+        "shownotes": shownotes,
+        "pid": os.getenv("bella_pid"),
+        "audioFile": audioFile,
+        "image": image,
+    }
+    response = requests.post(create_task_url, headers=headers, json=task_payload)
+    logger.info(colored(f"3. create 任务成功", "green"))
+
+    logger.info(colored(f"4. 数据库更新完毕", "green"))
+    return True
 
 
 if __name__ == "__main__":
@@ -149,5 +193,8 @@ if __name__ == "__main__":
     # wav_file_path = "no_git_oic/30a987b14288d08b697d1b996a3929dc.wav"
     # upload_wav(access_token, wav_file_path)
 
-    img_file_path = "no_git_oic/pics/friru.jpg"
-    upload_pic(access_token, img_file_path)
+    # img_file_path = "no_git_oic/pics/friru.jpg"
+    # upload_pic(access_token, img_file_path)
+
+    test_task_dict = {"title": "1", "shownotes": "<p>1</p>"}
+    upload_task(access_token, test_task_dict)

@@ -23,7 +23,11 @@ logger = logging.getLogger(__name__)
 
 from ai_part.tts.kokoro_by_deepinfra import send_text_to_speech, compute_mdhash_id
 from ai_part.crawler.crawler_by_jina import jina_request
-from ai_part.utils.tools import parse_got_list_api, trans_sentense, get_sentense_list
+from ai_part.utils.tools import (
+    parse_got_list_api_bak,
+    trans_sentense,
+    get_sentense_list,
+)
 from ai_part.utils.sql_sentence import *
 from ai_part.utils.check_db import execute_sqlite_sql
 
@@ -96,8 +100,8 @@ class PodcastServer(ls.LitAPI):
         if request["model"] == "podcast":
             start_time = time.time()
             # 获取待获取文章的list
-            article_list = parse_got_list_api(
-                os.getenv("podcast_site_url"),
+            article_list = parse_got_list_api_bak(
+                os.getenv("bak_podcast_site_url"),
                 int(os.getenv("podcast_article_post_nums")),
             )
             logger.info(colored(f"1.获取文章列表成功,文章列表:{article_list}", "green"))
@@ -108,6 +112,7 @@ class PodcastServer(ls.LitAPI):
                 article_info["title"] = article["title"]
                 article_info["detail"] = []
                 article_info["file_path"] = "init"
+                article_info["cover"] = article["cover"]
 
                 article_code = compute_mdhash_id(article["title"])
                 # 获取文章内容
@@ -177,17 +182,18 @@ class PodcastServer(ls.LitAPI):
                 today_article_list.append(article_info)
 
                 max_index_list = execute_sqlite_sql(select_max_index_detail_info_sql)
-                if len(max_index_list) == 0:
+                if len(max_index_list) == 0 or max_index_list[0][0] is None:
                     max_index = 1
                 else:
-                    max_index = max_index_list[0][0]
+                    max_index = int(max_index_list[0][0])
                 execute_sqlite_sql(
                     insert_detail_info_sql,
                     (
                         article_code,
-                        int(max_index) + 1,
+                        max_index + 1,
                         json.dumps(article_info["detail"], ensure_ascii=False),
                         final_output_path,
+                        article_info["cover"],
                         "",
                     ),
                 )

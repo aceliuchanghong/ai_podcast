@@ -86,6 +86,101 @@ def parse_got_list_api(url: str, nums: int = 2) -> list:
         return []
 
 
+def download_cover(cover_url: str, cover_path: str) -> None:
+    if cover_url == "":
+        return
+    try:
+        response = requests.get(cover_url)
+        if response.status_code == 200:
+            with open(cover_path, "wb") as f:
+                f.write(response.content)
+        else:
+            logger.error(f"下载封面图失败：{response.status_code}, URL: {cover_url}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"下载封面图异常: {e}, URL: {cover_url}")
+
+
+def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
+    hot_list_platform = [
+        "36kr",
+        "ithome",
+        "thepaper",
+        "weread",
+        "douban-group",
+        "hellogithub",
+        "zhihu-daily",
+    ]
+    result = []
+    platform = hot_list_platform[0]
+
+    def fetch_data(url, platform):
+        try:
+            response = requests.get(url + platform)
+            if response.status_code == 200:
+                return response.json()["data"]
+            else:
+                logger.error(f"请求失败，状态码：{response.status_code}, URL: {url}")
+                print(f"请求失败，状态码：{response.status_code}")
+                return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"请求异常: {e}, URL: {url}")
+            print(f"请求异常: {e}")
+            return None
+
+    # Get already posted URLs
+    alredy_post_url_list = execute_sqlite_sql(select_all_url_sql)
+    alredy_post_url_list = [item[0] for item in alredy_post_url_list]
+    # logger.info(colored(f"已生成的:{alredy_post_url_list}", "green"))
+
+    for platform in hot_list_platform:
+        if len(result) >= nums:
+            break
+
+        logger.info(colored(f"尝试从平台 {platform} 获取文章", "yellow"))
+        data = fetch_data(url, platform)
+        if data is None:
+            continue
+
+        for index in range(len(data)):
+            cover_url = data[index].get("cover", "")
+            if cover_url != "":
+                save_cover_path = os.getenv("pic_save_path")
+                save_cover_name = (
+                    f"{platform}_{compute_mdhash_id(data[index].get("title", ""))}.jpg"
+                )
+                os.makedirs(save_cover_path, exist_ok=True)
+                cover_path = os.path.join(save_cover_path, save_cover_name)
+            else:
+                cover_path = os.getenv("default_cover_path")
+            download_cover(cover_url, cover_path)
+
+            temp_item = {
+                "title": data[index].get("title", ""),
+                "cover": cover_path,
+                "url": data[index].get("url", ""),
+            }
+            if temp_item["url"] not in alredy_post_url_list and temp_item[
+                "url"
+            ] not in [item["url"] for item in result]:
+                result.append(temp_item)
+
+            if len(result) >= nums:
+                break
+
+    if len(result) > nums:
+        result = result[:nums]
+
+    for item in result:
+        code = compute_mdhash_id(item["title"])
+        execute_sqlite_sql(
+            insert_basic_info_sql,
+            (item["title"], item["url"], code, ""),
+        )
+
+    # logger.info(colored(f"最终结果:{result}", "green"))
+    return result if result else []
+
+
 def trans_sentense(sentense: str, client: OpenAI, language: str = "英文") -> str:
     if language not in ["中文", "英文"]:
         raise ValueError("只支持中文和英文翻译")
@@ -116,7 +211,7 @@ def get_sentense_list(
     if language not in ["中文", "英文"]:
         raise ValueError("只支持中文和英文剧本")
     prompt = (
-        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的纯{language}剧本,不要出现任何其他语言:\narticle_content:\n```"
+        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的纯{language}剧本,不要有任何汉字:\narticle_content:\n```"
         + article_content
         + "```\n"
         + "1.不要有除了剧本内容以外的文字输出\n"
@@ -185,5 +280,10 @@ if __name__ == "__main__":
     # xx = trans_sentense("拐卖中国演员王星的团伙全员被捕", client, "英文")
     # logger.info(colored(f"{xx}", "green"))
 
-    article_list = parse_got_list_api(os.getenv("podcast_site_url"), 1)
-    logger.info(colored(f"文章列表:{article_list}", "green"))
+    # article_list = parse_got_list_api(os.getenv("podcast_site_url"), 1)
+    # logger.info(colored(f"文章列表:{article_list}", "green"))
+
+    article_list = parse_got_list_api_bak(os.getenv("bak_podcast_site_url"), 1)
+    logger.info(
+        colored(f"\n文章列表:{article_list}\n文章数量:{len(article_list)}", "green")
+    )

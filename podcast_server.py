@@ -145,9 +145,9 @@ class PodcastServer(ls.LitAPI):
                         preset_voice_num=preset_voice_num,
                         output_file_destination="no_git_oic/" + article_code,
                     )
-                    trans = trans_sentense(script[1], self.client, "中文")
+                    trans = trans_sentense(script[1], self.client, "Chinese")
                     gen_wav_list.append((script[0], script[1], audio_path, trans))
-                logger.info(colored(f"{gen_wav_list}", "green"))
+                # logger.info(colored(f"{gen_wav_list}", "green"))
 
                 # 合并音频 并且输出结果 list
                 last_duration_end_time_str = "00:00:00"

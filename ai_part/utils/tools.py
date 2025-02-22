@@ -181,10 +181,10 @@ def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
     return result if result else []
 
 
-def trans_sentense(sentense: str, client: OpenAI, language: str = "英文") -> str:
-    if language not in ["中文", "英文"]:
-        raise ValueError("只支持中文和英文翻译")
-    prompt = f"请将以下内容翻译成地道的{language},以json格式返回:\n{sentense}\nexample:\n{{'translate_result': '翻译后的内容'}}"
+def trans_sentense(sentense: str, client: OpenAI, language: str = "English") -> str:
+    if language not in ["Chinese", "English"]:
+        raise ValueError("只支持Chinese和English翻译")
+    prompt = f"Please translate the following content into idiomatic {language} and return it in JSON format:\n{sentense}\nexample:\n{{'translate_result': 'translated content'}}"
     try:
         response = client.chat.completions.create(
             model=os.getenv("LLM_MODEL", "qwen2.5:7b-instruct-fp16"),
@@ -204,19 +204,19 @@ def get_sentense_list(
     article_content: str,
     client: OpenAI,
     model: Optional[str] = os.getenv("LLM_MODEL"),
-    system_prompt: Optional[str] = "你是一个专业的秘书",
-    language: str = "英文",
+    system_prompt: Optional[str] = "You are a professional secretary.",
+    language: str = "English",
     max_retries: int = 3,
 ) -> str:
-    if language not in ["中文", "英文"]:
-        raise ValueError("只支持中文和英文剧本")
+    if language not in ["中文", "English"]:
+        raise ValueError("只支持中文和English剧本")
     prompt = (
-        f"将领导提供的新闻内容转化为 Adam 与 Bella 对话的纯{language}剧本,不要有任何汉字:\narticle_content:\n```"
+        f"Convert the news content provided by the leader into a pure {language} script of a dialogue between Adam and Bella, without any Chinese characters:\narticle_content:\n```"
         + article_content
         + "```\n"
-        + "1.不要有除了剧本内容以外的文字输出\n"
-        + "2.剧本内容有价值,需要言之有物\n"
-        + "3.output-example:\n"
+        + "1. Do not output any text other than the script content\n"
+        + "2. The script content must be valuable and substantial\n"
+        + "3. Output-example:\n"
         + "```\n"
         + "1. Adam: Hey Bella, have you heard about Apple's upcoming product launch next Thursday?\n"
         + "2. Bella: Oh, you mean the one where Tim Cook sent out the invitation letter a week early? I'm really curious about what they're calling the “new family member.”\n"

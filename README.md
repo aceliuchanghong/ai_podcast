@@ -170,5 +170,6 @@ git clone https://github.com/aceliuchanghong/ai_podcast
 uv venv
 source .venv/bin/activate
 uv pip install .
-uv run podcast_server.py
+uv run podcast_gen_server.py
+uv run main_podcast_server.py
 ```

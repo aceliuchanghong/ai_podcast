@@ -75,7 +75,9 @@ class PodcastServer(ls.LitAPI):
         # 单纯测试
         if request["model"] == "kokoro-82M":
             output_file = send_text_to_speech(
-                text=request["input"], output_file_destination="no_git_oic/test"
+                text=request["input"],
+                preset_voice_num=request["voice"],
+                output_file_destination="no_git_oic/test",
             )
             output_path = os.path.join(current_dir, output_file)
             duration = get_wav_duration(output_path)
@@ -86,10 +88,10 @@ class PodcastServer(ls.LitAPI):
                     "file_path": output_path,
                     "detail": [
                         {
-                            "speaker": "bella",
+                            "speaker": request["voice"],
                             "text": request["input"],
                             "trans_text": trans_sentense(
-                                request["input"], self.client, "中文"
+                                request["input"], self.client, "Chinese"
                             ),
                             "time_span": "00:00:00-" + time_span,
                         },
@@ -112,7 +114,6 @@ class PodcastServer(ls.LitAPI):
                 article_info["title"] = article["title"]
                 article_info["detail"] = []
                 article_info["file_path"] = "init"
-                article_info["cover"] = article["cover"]
 
                 article_code = compute_mdhash_id(article["title"])
                 # 获取文章内容
@@ -143,7 +144,7 @@ class PodcastServer(ls.LitAPI):
                     audio_path = send_text_to_speech(
                         text=script[1],
                         preset_voice_num=preset_voice_num,
-                        output_file_destination="no_git_oic/" + article_code,
+                        output_file_destination="no_git_oic/wav/" + article_code,
                     )
                     trans = trans_sentense(script[1], self.client, "Chinese")
                     gen_wav_list.append((script[0], script[1], audio_path, trans))
@@ -152,7 +153,7 @@ class PodcastServer(ls.LitAPI):
                 # 合并音频 并且输出结果 list
                 last_duration_end_time_str = "00:00:00"
                 final_output_path = os.path.join(
-                    current_dir, "no_git_oic/" + article_code + ".wav"
+                    current_dir, "no_git_oic/wav/" + article_code + ".wav"
                 )
                 if os.path.exists(final_output_path):
                     os.remove(final_output_path)
@@ -179,13 +180,15 @@ class PodcastServer(ls.LitAPI):
 
                 combined_audio.export(final_output_path, format="wav")
                 article_info["file_path"] = final_output_path
+                article_info["cover"] = os.path.join(current_dir, article["cover"])
                 today_article_list.append(article_info)
 
                 max_index_list = execute_sqlite_sql(select_max_index_detail_info_sql)
                 if len(max_index_list) == 0 or max_index_list[0][0] is None:
-                    max_index = 1
+                    max_index = 0
                 else:
                     max_index = int(max_index_list[0][0])
+                # 存入数据库
                 execute_sqlite_sql(
                     insert_detail_info_sql,
                     (
@@ -195,14 +198,21 @@ class PodcastServer(ls.LitAPI):
                         final_output_path,
                         article_info["cover"],
                         "",
+                        "",
+                        "",
                     ),
+                )
+                execute_sqlite_sql(
+                    insert_basic_info_sql,
+                    (article["title"], article["url"], article_code, ""),
                 )
                 logger.info(colored("5.合并音频成功", "green"))
 
-            logger.info(colored(f"{today_article_list}", "green"))
+            logger.info(colored(f"6. 输出存档:\n{today_article_list}", "green"))
+
             end_time = time.time()
             elapsed_time = end_time - start_time
-            logger.info(colored(f"此播客生成共耗时: {elapsed_time:.2f}秒", "green"))
+            logger.info(colored(f"7. 此播客生成共耗时: {elapsed_time:.2f}秒", "green"))
 
             return today_article_list
         else:

@@ -17,7 +17,7 @@ def parse_json2xyz(json_data):
         speaker = item.get("speaker", "")
         text = item.get("text", "")
         trans_text = item.get("trans_text", "")
-        line = f"{time_span} {speaker}: {text}\n{trans_text}"
+        line = f"<p>{time_span} {speaker}: {text}</p><p>{trans_text}</p>\n"
         result.append(line)
 
     return "\n".join(result)

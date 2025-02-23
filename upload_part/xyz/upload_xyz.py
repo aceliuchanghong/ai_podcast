@@ -21,9 +21,10 @@ sys.path.insert(
 from upload_part.xyz.cookie_getter import *
 from ai_part.utils.sql_sentence import *
 from ai_part.utils.check_db import execute_sqlite_sql
+from ai_part.utils.parse_xyz import parse_json2xyz
 
 
-def upload_wav(access_token, file_path):
+def upload_wav(access_token, file_path) -> bool:
     # 获取 upload token
     ready_upload_url = os.getenv("xyz_ready_upload_url")
     token_response = get_url_response(ready_upload_url, access_token)
@@ -86,12 +87,12 @@ def upload_wav(access_token, file_path):
     )
     logger.info(colored(f"6. create 任务成功", "green"))
     # 数据库更新
-    execute_sqlite_sql(update_detail_info_sql, (file_path,))
+    execute_sqlite_sql(update_detail_wav_sql, (file_path,))
     logger.info(colored(f"7. 数据库更新成功", "green"))
     return True
 
 
-def upload_pic(access_token, img_file_path):
+def upload_pic(access_token, img_file_path, wav_file_path) -> bool:
     # 获取 upload token
     ready_upload_url = os.getenv("xyz_ready_upload_url2")
     token_response = get_url_response(ready_upload_url, access_token)
@@ -133,16 +134,17 @@ def upload_pic(access_token, img_file_path):
         create_url, headers={"x-jike-access-token": access_token}, json=all_create
     )
     logger.info(colored(f"3. create 任务成功", "green"))
-    # 似乎是需要的返回信息
-    print(f"{response.json()}")
+    # 数据库更新
+    execute_sqlite_sql(update_detail_pic_sql, (wav_file_path,))
+    logger.info(colored(f"4. 数据库更新成功", "green"))
     return True
 
 
-def upload_task(access_token, task_notes_dict):
-    logger.info(colored(f"1. 数据库获取应上传文件信息成功", "green"))
+def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
+    logger.info(colored(f"1. 开始上传...", "green"))
+
     get_list_url = os.getenv("xyz_list_url")
     create_task_url = os.getenv("xyz_task_create")
-
     wav_dict_payload = {
         "skip": 0,
         "pid": os.getenv("bella_pid"),
@@ -157,32 +159,71 @@ def upload_task(access_token, task_notes_dict):
     }
     # 获取已上传文件列表
     headers = {"x-jike-access-token": access_token}
-    wav_list = requests.post(get_list_url, headers=headers, json=wav_dict_payload)
-    pic_list = requests.post(get_list_url, headers=headers, json=pic_dict_payload)
-    logger.info(
-        colored(
-            f"2. total_wav:{len(wav_list.json()["data"])},total_pic:{len(pic_list.json()["data"])}, 网站选中文件成功",
-            "green",
+    try:
+        wav_list = requests.post(get_list_url, headers=headers, json=wav_dict_payload)
+        pic_list = requests.post(get_list_url, headers=headers, json=pic_dict_payload)
+        logger.info(
+            colored(
+                f"2. total_wav:{len(wav_list.json()["data"])},total_pic:{len(pic_list.json()["data"])}, 网站选中文件成功",
+                "green",
+            )
         )
-    )
+    except requests.exceptions.RequestException as e:
+        logger.error(colored(f"2. 网站获取文件失败:{e}", "red"))
+        return False
 
     # 准备上传
-    title = task_notes_dict.get("title")
-    shownotes = task_notes_dict.get("shownotes")
-    audioFile = wav_list.json()["data"][0]["audioFile"]
-    image = pic_list.json()["data"][0]["imageFile"]
+    title = task_notes_dict["title"]
+    shownotes = parse_json2xyz(task_notes_dict["detail"])
+
+    # 核心-选择文件
+    for index, wav_name in enumerate(wav_list.json()["data"]):
+        if (
+            os.path.basename(task_notes_dict["file_path"]).split(".")[0]
+            == wav_name["title"]
+        ):
+            audioFile = wav_list.json()["data"][index]["audioFile"]
+            break
+
+    for index, pic_name in enumerate(pic_list.json()["data"]):
+        if (
+            os.path.basename(task_notes_dict["cover"]).split(".")[0]
+            == pic_name["title"]
+        ):
+            image = pic_list.json()["data"][index]["imageFile"]
+            break
+
+    if audioFile is None:
+        raise UnboundLocalError("audioFile not found")
+    if image is None:
+        raise UnboundLocalError("image not found")
+
+    max_index_list = execute_sqlite_sql(select_max_index_detail_info_sql)
+    if len(max_index_list) == 0 or max_index_list[0][0] is None:
+        max_index = 0
+    else:
+        max_index = int(max_index_list[0][0])
 
     task_payload = {
-        "title": title,
-        "shownotes": shownotes,
+        "title": f"【{str(max_index + 1)}】" + title,
+        "shownotes": shownotes
+        + "<p>   </p><p>   </p><p>"
+        + os.getenv("tail")
+        + "\n"
+        + "</p>",
         "pid": os.getenv("bella_pid"),
         "audioFile": audioFile,
         "image": image,
     }
+
     response = requests.post(create_task_url, headers=headers, json=task_payload)
+    if response.status_code != 200:
+        logger.error(colored(f"3. 最终任务上传失败:{response}", "red"))
+        return False
     logger.info(colored(f"3. create 任务成功", "green"))
 
-    logger.info(colored(f"4. 数据库更新完毕", "green"))
+    execute_sqlite_sql(update_detail_task_sql, (file_md5_code,))
+    logger.info(colored(f"4. 数据库更新成功", "green"))
     return True
 
 
@@ -198,7 +239,12 @@ if __name__ == "__main__":
     # upload_wav(access_token, wav_file_path)
 
     # img_file_path = "no_git_oic/pics/friru.jpg"
-    # upload_pic(access_token, img_file_path)
+    # upload_pic(access_token, img_file_path, wav_file_path)
 
-    test_task_dict = {"title": "1", "shownotes": "<p>1</p>"}
+    test_task_dict = {
+        "title": "1",
+        "detail": "<p>1</p>",
+        "file_path": "no_git_oic/30a987b14288d08b697d1b996a3929dc.wav",
+        "cover": "no_git_oic/pics/friru.jpg",
+    }
     upload_task(access_token, test_task_dict)

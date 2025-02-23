@@ -6,6 +6,7 @@ import logging
 from termcolor import colored
 import base64
 from hashlib import md5
+from typing import Union
 
 load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -99,7 +100,7 @@ def save_base64_wav(base64_string, output_file_path):
 
 def send_text_to_speech(
     text: str,
-    preset_voice_num: int = 0,
+    preset_voice_num: Union[str, int] = 0,
     output_file_destination: str = "no_git_oic",
     file_name: str = "output.wav",
 ) -> str:
@@ -112,6 +113,11 @@ def send_text_to_speech(
     :return: 输出文件路径
     :raises: Exception 如果请求失败
     """
+    if isinstance(preset_voice_num, str):
+        try:
+            preset_voice_num = CHOICES.index(preset_voice_num)
+        except ValueError:
+            preset_voice_num = 0
     if preset_voice_num < 0 or preset_voice_num >= len(CHOICES):
         raise ValueError(
             f"Invalid preset_voice_num. Must be between 0 and {len(CHOICES)}."

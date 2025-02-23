@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS ai_podcast_detail_info (
   detail TEXT, 
   file_path TEXT, 
   pic_path TEXT,
-  remark TEXT
+  wav_remark TEXT,
+  cover_remark TEXT,
+  task_remark TEXT
 )
 """
 
@@ -37,28 +39,42 @@ INSERT INTO ai_podcast_detail_info (
   detail, 
   file_path,
   pic_path,
-  remark
+  wav_remark,
+  cover_remark,
+  task_remark
 ) 
-VALUES (?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 # select
 select_all_url_sql = """
-SELECT url
-FROM ai_podcast_basic_info
-where remark = 'upload_suc'
+SELECT a.url
+FROM ai_podcast_basic_info a
+INNER JOIN ai_podcast_detail_info b
+    ON a.code = b.code
+WHERE b.task_remark = 'upload_suc'
 """
 
 select_max_index_detail_info_sql = """
 SELECT MAX(index_num)
 FROM ai_podcast_detail_info
-where remark = 'upload_suc'
+where task_remark = 'upload_suc'
 """
 
 
 # update
-update_detail_info_sql = """
+update_detail_wav_sql = """
 Update ai_podcast_detail_info 
-set remark = 'upload_suc' 
+set wav_remark = 'upload_suc' 
 where file_path = ?
+"""
+update_detail_pic_sql = """
+Update ai_podcast_detail_info 
+set cover_remark = 'upload_suc' 
+where file_path = ?
+"""
+update_detail_task_sql = """
+Update ai_podcast_detail_info 
+set task_remark = 'upload_suc' 
+where code = ?
 """

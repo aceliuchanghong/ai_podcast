@@ -27,7 +27,7 @@ def check_token_expiration(access_token, check_url):
     return response.status_code == 200
 
 
-def xyz_main():
+def refersh_xyz():
     phone_number = os.getenv("MOBILE_NUMBER")
     send_login_request_url = os.getenv("xyz_send_code_url")
     complete_login_url = os.getenv("xyz_complete_login_url")
@@ -123,13 +123,15 @@ def xyz_main():
 
     # Check token expiration after saving
     if check_token_expiration(access_token, check_url):
-        logger.info(colored(f"4. GO!GO!GO!", "green"))
+        logger.info(colored(f"GO!GO!GO!", "green"))
     else:
         logger.error(colored(f"4. Token has expired", "red"))
+
+    return access_token
 
 
 if __name__ == "__main__":
     """
     python refresh_token.py
     """
-    xyz_main()
+    refersh_xyz()

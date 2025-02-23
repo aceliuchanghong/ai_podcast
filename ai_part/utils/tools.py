@@ -100,7 +100,7 @@ def download_cover(cover_url: str, cover_path: str) -> None:
         logger.error(f"下载封面图异常: {e}, URL: {cover_url}")
 
 
-def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
+def parse_got_list_api_bak(url: str, nums: int = 1) -> list:
     hot_list_platform = [
         "36kr",
         "ithome",
@@ -127,10 +127,13 @@ def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
             print(f"请求异常: {e}")
             return None
 
-    # Get already posted URLs
-    alredy_post_url_list = execute_sqlite_sql(select_all_url_sql)
-    alredy_post_url_list = [item[0] for item in alredy_post_url_list]
-    # logger.info(colored(f"已生成的:{alredy_post_url_list}", "green"))
+    # Get already generated URLs
+    alredy_gen_url_list = execute_sqlite_sql(select_all_url_sql)
+    # print(f"已生成的:{alredy_gen_url_list}")
+    if len(alredy_gen_url_list) == 0 or alredy_gen_url_list[0][0] is None:
+        alredy_gen_url_list = []
+    alredy_gen_url_list = [item[0] for item in alredy_gen_url_list]
+    # logger.info(colored(f"已生成的:{alredy_gen_url_list}", "green"))
 
     for platform in hot_list_platform:
         if len(result) >= nums:
@@ -159,9 +162,9 @@ def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
                 "cover": cover_path,
                 "url": data[index].get("url", ""),
             }
-            if temp_item["url"] not in alredy_post_url_list and temp_item[
-                "url"
-            ] not in [item["url"] for item in result]:
+            if temp_item["url"] not in alredy_gen_url_list and temp_item["url"] not in [
+                item["url"] for item in result
+            ]:
                 result.append(temp_item)
 
             if len(result) >= nums:
@@ -170,14 +173,6 @@ def parse_got_list_api_bak(url: str, nums: int = 2) -> list:
     if len(result) > nums:
         result = result[:nums]
 
-    for item in result:
-        code = compute_mdhash_id(item["title"])
-        execute_sqlite_sql(
-            insert_basic_info_sql,
-            (item["title"], item["url"], code, ""),
-        )
-
-    # logger.info(colored(f"最终结果:{result}", "green"))
     return result if result else []
 
 

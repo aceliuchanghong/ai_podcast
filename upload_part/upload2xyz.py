@@ -88,7 +88,6 @@ def process_audio_generation_and_upload(api_key, model, max_retries=2):
 if __name__ == "__main__":
     """
     python upload_part/upload2xyz.py
-    nohup python upload_part/upload2xyz.py > no_git_oic/upload2xyz.log 2>&1 &
     """
     api_key = os.getenv("podcast_api_key")
     model = "podcast"

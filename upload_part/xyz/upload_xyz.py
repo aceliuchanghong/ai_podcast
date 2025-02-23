@@ -207,9 +207,9 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
     task_payload = {
         "title": f"【{str(max_index + 1)}】" + title,
         "shownotes": shownotes
-        + "<p>   </p><p>   </p><p>"
+        + "<p>   </p><p>   </p>"
+        + "<p>"
         + os.getenv("tail")
-        + "\n"
         + "</p>",
         "pid": os.getenv("bella_pid"),
         "audioFile": audioFile,

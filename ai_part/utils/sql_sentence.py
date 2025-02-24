@@ -56,7 +56,7 @@ WHERE b.task_remark = 'upload_suc'
 """
 
 select_max_index_detail_info_sql = """
-SELECT MAX(index_num)
+SELECT MAX(CAST(index_num AS INTEGER))
 FROM ai_podcast_detail_info
 where task_remark = 'upload_suc'
 """

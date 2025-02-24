@@ -189,6 +189,7 @@ class PodcastServer(ls.LitAPI):
                 else:
                     max_index = int(max_index_list[0][0])
                 # 存入数据库
+                logger.info(colored(f"当前序列为:{str(max_index)}", "green"))
                 execute_sqlite_sql(
                     insert_detail_info_sql,
                     (

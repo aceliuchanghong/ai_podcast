@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from upload_part.upload2xyz import process_audio_generation_and_upload
 
 
-def main():
+def main(wait_time=60 * 3):
     # 获取API key
     api_key = os.getenv("podcast_api_key")
     model = "podcast"
@@ -36,8 +36,8 @@ def main():
                 colored(f"完成执行: {time.strftime('%Y-%m-%d %H:%M:%S')}", "green")
             )
 
-            # 随机等待15-20分钟（转换为秒）
-            wait_time = random.randint(15 * 60, 20 * 60)
+            # 随机等待 wait_time - wait_time+5 分钟（转换为秒）
+            wait_time = random.randint(wait_time * 60, (wait_time + 5) * 60)
             print(f"等待 {wait_time//60} 分钟 {wait_time%60} 秒...")
             time.sleep(wait_time)
 

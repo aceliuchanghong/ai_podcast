@@ -26,7 +26,7 @@ from ai_part.utils.parse_xyz import parse_json2xyz
 
 def upload_wav(access_token, file_path) -> bool:
     # 获取 upload token
-    ready_upload_url = os.getenv("xyz_ready_upload_url")
+    ready_upload_url = os.getenv("xyz_ready_upload_url") + os.getenv("appId")
     token_response = get_url_response(ready_upload_url, access_token)
     token = token_response.json()["token"]
     logger.info(colored(f"1. upload token:{token[:10]}", "green"))
@@ -94,7 +94,7 @@ def upload_wav(access_token, file_path) -> bool:
 
 def upload_pic(access_token, img_file_path, wav_file_path) -> bool:
     # 获取 upload token
-    ready_upload_url = os.getenv("xyz_ready_upload_url2")
+    ready_upload_url = os.getenv("xyz_ready_upload_url2") + os.getenv("appId")
     token_response = get_url_response(ready_upload_url, access_token)
     token = token_response.json()["token"]
     logger.info(colored(f"1. upload token:{token[:10]}", "green"))
@@ -118,7 +118,12 @@ def upload_pic(access_token, img_file_path, wav_file_path) -> bool:
         # Send the POST request
         image_post_response = requests.post(upload_url, data=data, files=files)
         if image_post_response.status_code != 200:
-            logger.error(colored(f"图片上传失败:{image_post_response}", "red"))
+            logger.error(
+                colored(
+                    f"图片上传失败:{image_post_response} {image_post_response.json()}",
+                    "red",
+                )
+            )
             return False
         logger.info(colored(f"2. 图片上传成功", "green"))
 
@@ -205,7 +210,7 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
         max_index = int(max_index_list[0][0])
 
     task_payload = {
-        "title": f"【{str(max_index + 1)}】" + title,
+        "title": f"【{str(max_index + 1)}】" + title[:50],
         "shownotes": shownotes
         + "<p>   </p><p>   </p>"
         + "<p>"
@@ -218,7 +223,9 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
 
     response = requests.post(create_task_url, headers=headers, json=task_payload)
     if response.status_code != 200:
-        logger.error(colored(f"3. 最终任务上传失败:{response}", "red"))
+        logger.error(
+            colored(f"3. 最终任务上传失败:{response}. {response.json()}", "red")
+        )
         return False
     logger.info(colored(f"3. create 任务成功", "green"))
 
@@ -243,8 +250,23 @@ if __name__ == "__main__":
 
     test_task_dict = {
         "title": "1",
-        "detail": "<p>1</p>",
-        "file_path": "no_git_oic/30a987b14288d08b697d1b996a3929dc.wav",
-        "cover": "no_git_oic/pics/friru.jpg",
+        "detail": [
+            {
+                "speaker": "Adam",
+                "text": "1",
+                "trans_text": "QAQ",
+                "time_span": "00:00:00-00:00:04",
+            },
+            {
+                "speaker": "Bella",
+                "text": "2",
+                "trans_text": "QBQ",
+                "time_span": "00:00:04-00:00:14",
+            },
+        ],
+        "file_path": "no_git_oic/wav/58d72c685bc7d601aa56f405db95651c.wav",
+        "cover": "no_git_oic/pic/36kr_58d72c685bc7d601aa56f405db95651c.jpg",
     }
-    upload_task(access_token, test_task_dict)
+
+    code = "58d72c685bc7d601aa56f405db95651c"
+    upload_task(access_token, test_task_dict, code)

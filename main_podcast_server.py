@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 from upload_part.upload2xyz import process_audio_generation_and_upload
 
 
-def main(wait_time=60 * 3):
+def main(wait_hour):
     # 获取API key
     api_key = os.getenv("podcast_api_key")
     model = "podcast"
-
+    wait_time_1 = wait_hour * 60 * 60
+    wait_time_2 = wait_hour * 60 * 60 + 5
     while True:
         try:
             # 执行音频生成和上传
@@ -37,7 +38,7 @@ def main(wait_time=60 * 3):
             )
 
             # 随机等待 wait_time - wait_time+5 分钟（转换为秒）
-            wait_time = random.randint(wait_time * 60, (wait_time + 5) * 60)
+            wait_time = random.randint(wait_time_1, wait_time_2)
             print(f"等待 {wait_time//60} 分钟 {wait_time%60} 秒...")
             time.sleep(wait_time)
 
@@ -51,4 +52,5 @@ if __name__ == "__main__":
     python main_podcast_server.py
     nohup python main_podcast_server.py > no_git_oic/main_podcast_server.log 2>&1 &
     """
-    main()
+    wait_hour = int(os.getenv("WAIT_HOUR", 3))
+    main(wait_hour)

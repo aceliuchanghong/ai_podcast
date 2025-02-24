@@ -23,6 +23,8 @@ from upload_part.xyz.upload_xyz import upload_wav, upload_pic, upload_task
 from client import generate_speech
 from refresh_token import refersh_xyz
 from ai_part.tts.kokoro_by_deepinfra import compute_mdhash_id
+from ai_part.utils.sql_sentence import *
+from ai_part.utils.check_db import execute_sqlite_sql
 
 
 def process_audio_generation_and_upload(api_key, model, max_retries=2):
@@ -67,11 +69,15 @@ def process_audio_generation_and_upload(api_key, model, max_retries=2):
 
     # 2. 上传wav文件
     logger.info(colored(f"2. 开始上传wav...", "green"))
-    try_upload(upload_wav, wav_file_path, operation_name="上传wav")
+    if execute_sqlite_sql(select_already_up_wav_info_sql, (wav_file_path,))[0][0] != 1:
+        try_upload(upload_wav, wav_file_path, operation_name="上传wav")
 
     # 3. 上传封面
     logger.info(colored(f"3. 开始上传封面...", "green"))
-    try_upload(upload_pic, cover_file_path, wav_file_path, operation_name="上传封面")
+    if execute_sqlite_sql(select_already_up_pic_info_sql, (wav_file_path,))[0][0] != 1:
+        try_upload(
+            upload_pic, cover_file_path, wav_file_path, operation_name="上传封面"
+        )
 
     # 4. 上传任务
     logger.info(colored(f"4. 开始上传任务...", "green"))

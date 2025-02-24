@@ -61,6 +61,17 @@ FROM ai_podcast_detail_info
 where task_remark = 'upload_suc'
 """
 
+select_already_up_wav_info_sql = """
+SELECT count(*) from ai_podcast_detail_info 
+where file_path = ?
+and wav_remark = 'upload_suc' 
+"""
+
+select_already_up_pic_info_sql = """
+SELECT count(*) from ai_podcast_detail_info 
+where file_path = ?
+and cover_remark = 'upload_suc' 
+"""
 
 # update
 update_detail_wav_sql = """

@@ -1,4 +1,4 @@
-def parse_json2xyz(json_data):
+def parse_json2xyz(json_data, max_length=4700):
     """
     Convert a list of JSON objects to a formatted string.
 
@@ -12,13 +12,21 @@ def parse_json2xyz(json_data):
     str: A formatted string where each line contains the time span, speaker, and text.
     """
     result = []
+    current_length = 0
+
     for item in json_data:
         time_span = item.get("time_span", "").split("-")[0]
         speaker = item.get("speaker", "")
         text = item.get("text", "")
         trans_text = item.get("trans_text", "")
-        line = f"<p>{time_span} {speaker}: {text}</p><p>{trans_text}</p>\n"
+        line = f"<p>{time_span} {speaker}: {text}</p><p>{trans_text}</p>"
+
+        # 检查长度是否超出限制
+        if current_length + len(line) > max_length:
+            break  # 如果超出限制，则停止添加新内容
+
         result.append(line)
+        current_length += len(line)
 
     return "\n".join(result)
 

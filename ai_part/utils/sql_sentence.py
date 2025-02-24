@@ -73,6 +73,20 @@ where file_path = ?
 and cover_remark = 'upload_suc' 
 """
 
+select_already_gen_wav_info_sql = """
+SELECT count(*) from ai_podcast_basic_info 
+where code = ?
+"""
+
+select_already_gen_wav_detail_sql = """
+SELECT a.detail, a.file_path, a.pic_path
+FROM ai_podcast_detail_info a
+INNER JOIN ai_podcast_basic_info b
+    ON a.code = b.code
+WHERE b.code = ?
+limit 1
+"""
+
 # update
 update_detail_wav_sql = """
 Update ai_podcast_detail_info 

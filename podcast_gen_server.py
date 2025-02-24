@@ -116,6 +116,25 @@ class PodcastServer(ls.LitAPI):
                 article_info["file_path"] = "init"
 
                 article_code = compute_mdhash_id(article["title"])
+                if (
+                    execute_sqlite_sql(
+                        select_already_gen_wav_info_sql, (article_code,)
+                    )[0][0]
+                    >= 0
+                ):
+                    article_info["title"] = article["title"]
+                    article_info["detail"] = execute_sqlite_sql(
+                        select_already_gen_wav_detail_sql, (article_code,)
+                    )[0][0]
+                    article_info["file_path"] = execute_sqlite_sql(
+                        select_already_gen_wav_detail_sql, (article_code,)
+                    )[0][1]
+                    article_info["cover"] = execute_sqlite_sql(
+                        select_already_gen_wav_detail_sql, (article_code,)
+                    )[0][2]
+                    today_article_list.append(article_info)
+                    continue
+
                 # 获取文章内容
                 logger.info(colored(f"2.爬虫开始获取文章", "green"))
                 today_article_content = jina_request(

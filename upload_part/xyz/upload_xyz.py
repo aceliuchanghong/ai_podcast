@@ -28,14 +28,28 @@ def upload_wav(access_token, file_path) -> bool:
     # 获取 upload token
     ready_upload_url = os.getenv("xyz_ready_upload_url") + os.getenv("appId")
     token_response = get_url_response(ready_upload_url, access_token)
-    token = token_response.json()["token"]
-    logger.info(colored(f"1. upload token:{token[:10]}", "green"))
+    if token_response.status_code != 200:
+        raise ValueError(
+            f"Failed to get upload token. Status: {token_response.status_code}"
+        )
+    token_data = token_response.json()
+    token = token_data.get("token", "")
+    if not token:
+        raise ValueError("Upload token not found in response")
+    logger.info(colored(f"1. upload token: {token[:10]}", "green"))
 
-    # 获取 uploadId
+    # Step 2: Get uploadId
     upload_url = os.getenv("xyz_upload_url")
-    uploadId_response = post_response(upload_url, "UpToken " + token)
-    uploadId = uploadId_response.json()["uploadId"]
-    logger.info(colored(f"2. uploadId:{uploadId}", "green"))
+    uploadId_response = post_response(upload_url, f"UpToken {token}")
+    if uploadId_response.status_code != 200:
+        raise ValueError(
+            f"Failed to get uploadId. Status: {uploadId_response.status_code}"
+        )
+    upload_data = uploadId_response.json()
+    uploadId = upload_data.get("uploadId", "")
+    if not uploadId:
+        raise ValueError("UploadId not found in response")
+    logger.info(colored(f"2. uploadId: {uploadId}", "green"))
 
     # 计算该文件需要多少次put
     chunk_size = int(os.getenv("chunk_size"))
@@ -54,6 +68,7 @@ def upload_wav(access_token, file_path) -> bool:
             chunk_data = file.read(bytes_to_read)
             # 构造当前分片的 URL
             current_url = upload_url + "/" + uploadId + "/" + str(i + 1)
+            # logger.info(colored(f"分片 {i + 1}/{num_chunks} 开始上传...", "green"))
             try:
                 # 发送 PUT 请求
                 response = requests.put(
@@ -75,6 +90,14 @@ def upload_wav(access_token, file_path) -> bool:
     last_wav_post_response = post_response(
         upload_url + "/" + uploadId, "UpToken " + token, last_wav_post_dict
     )
+    if last_wav_post_response.status_code != 200:
+        logger.error(
+            colored(
+                f"合并失败:{last_wav_post_response} {last_wav_post_response.json()}",
+                "red",
+            )
+        )
+        return False
     all_create["pid"] = os.getenv("bella_pid")
     all_create["title"] = os.path.basename(file_path).replace(".wav", "")
     all_create["file"] = last_wav_post_response.json()["file"]

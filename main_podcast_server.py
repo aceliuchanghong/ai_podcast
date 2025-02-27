@@ -44,6 +44,7 @@ def main(wait_hour):
 
         except Exception as e:
             logger.error(colored(f"发生错误: {str(e)}", "red"))
+            print(f"等待60分钟...")
             time.sleep(60 * 60)
 
 

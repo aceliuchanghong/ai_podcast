@@ -116,22 +116,15 @@ class PodcastServer(ls.LitAPI):
                 article_info["file_path"] = "init"
 
                 article_code = compute_mdhash_id(article["title"])
-                if (
-                    execute_sqlite_sql(
-                        select_already_gen_wav_info_sql, (article_code,)
-                    )[0][0]
-                    >= 0
-                ):
+                temp_result = execute_sqlite_sql(
+                    select_already_gen_wav_detail_sql, (article_code,)
+                )
+                # logger.info(colored(f"历史记录{temp_result}", "red"))
+                if len(temp_result) > 0 and temp_result[0][0] is not None:
                     article_info["title"] = article["title"]
-                    article_info["detail"] = execute_sqlite_sql(
-                        select_already_gen_wav_detail_sql, (article_code,)
-                    )[0][0]
-                    article_info["file_path"] = execute_sqlite_sql(
-                        select_already_gen_wav_detail_sql, (article_code,)
-                    )[0][1]
-                    article_info["cover"] = execute_sqlite_sql(
-                        select_already_gen_wav_detail_sql, (article_code,)
-                    )[0][2]
+                    article_info["detail"] = json.loads(temp_result[0][0])
+                    article_info["file_path"] = temp_result[0][1]
+                    article_info["cover"] = temp_result[0][2]
                     today_article_list.append(article_info)
                     continue
 

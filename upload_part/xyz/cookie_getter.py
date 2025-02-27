@@ -174,6 +174,7 @@ if __name__ == "__main__":
             chunk_data = file.read(bytes_to_read)
             # 构造当前分片的 URL
             current_url = upload_url + "/" + uploadId + "/" + str(i + 1)
+            logger.info(colored(f"分片 {i + 1}/{num_chunks} 开始上传...", "green"))
             try:
                 # 发送 PUT 请求
                 response = requests.put(
@@ -182,7 +183,7 @@ if __name__ == "__main__":
                     headers={"authorization": "UpToken " + token},
                 )
                 if response.status_code == 200:
-                    print(f"分片 {i + 1}/{num_chunks} 上传成功")
+                    logger.info(colored(f"分片 {i + 1}/{num_chunks} 上传成功", "green"))
                     ans_dict = {"etag": response.json()["etag"], "partNumber": i + 1}
                     parts.append(ans_dict)
             except requests.exceptions.RequestException as e:

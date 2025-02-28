@@ -36,7 +36,20 @@ def upload_wav(access_token, file_path) -> bool:
     token = token_data.get("token", "")
     if not token:
         raise ValueError("Upload token not found in response")
-    logger.info(colored(f"1. upload token: {token[:10]}", "green"))
+    logger.info(colored(f"1. upload token: {token.split(":")[0]}", "green"))
+
+    # 请求区域
+    area_query_url = (
+        os.getenv("xyz_area_query_url")
+        + token.split(":")[0]
+        + os.getenv("xyz_area_tail")
+    )
+    area_info_response = requests.get(area_query_url)
+    if area_info_response.status_code != 200:
+        raise ValueError(
+            f"Failed to get area_info_response. Status: {area_info_response.status_code}"
+        )
+    logger.info(colored(f"1.5 请求了区域信息", "green"))
 
     # Step 2: Get uploadId
     upload_url = os.getenv("xyz_upload_url")

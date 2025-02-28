@@ -52,6 +52,7 @@ if __name__ == "__main__":
     """
     python main_podcast_server.py
     nohup python main_podcast_server.py > no_git_oic/main_podcast_server.log 2>&1 &
+    ps -ef | grep main_podcast_server
     """
     wait_hour = int(os.getenv("WAIT_HOUR", 3))
     main(wait_hour)

@@ -247,6 +247,7 @@ if __name__ == "__main__":
     """
     python podcast_gen_server.py
     nohup python podcast_gen_server.py > no_git_oic/podcast_gen_server.log 2>&1 &
+    ps -ef | grep podcast_gen_server
     """
     execute_sqlite_sql(create_basic_table_sql)
     execute_sqlite_sql(create_detail_table_sql)

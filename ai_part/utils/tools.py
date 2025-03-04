@@ -100,7 +100,9 @@ def download_cover(cover_url: str, cover_path: str) -> None:
         logger.error(f"下载封面图异常: {e}, URL: {cover_url}")
 
 
-def parse_got_list_api_bak(url: str, nums: int = 1) -> list:
+def parse_got_list_api_bak(
+    url: str, nums: int = 1, search_platform: str = "36kr"
+) -> list:
     hot_list_platform = [
         "36kr",
         "ithome",
@@ -111,7 +113,7 @@ def parse_got_list_api_bak(url: str, nums: int = 1) -> list:
         "zhihu-daily",
     ]
     result = []
-    platform = hot_list_platform[0]
+    platform = search_platform
 
     def fetch_data(url, platform):
         try:
@@ -184,7 +186,7 @@ def trans_sentense(sentense: str, client: OpenAI, language: str = "English") -> 
         response = client.chat.completions.create(
             model=os.getenv("LLM_MODEL", "qwen2.5:7b-instruct-fp16"),
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
+            temperature=1.0,
         )
         only_str = response.choices[0].message.content
         # logger.info(colored(f"llm-output:{only_str}", "green"))
@@ -213,7 +215,7 @@ def get_sentense_list(
         + "2. The script content must be valuable and substantial\n"
         + "3. Output-example:\n"
         + "```\n"
-        + "1. Adam: Hey Bella, have you heard about Apple's upcoming product launch next Thursday?\n"
+        + "1. Adam: Have you heard about Apple's upcoming product launch scheduled for next Thursday, Bella?\n"
         + "2. Bella: Oh, you mean the one where Tim Cook sent out the invitation letter a week early? I'm really curious about what they're calling the “new family member.”\n"
         + "3. Adam: Exactly! It's generating a lot of buzz. They haven't announced the specific date or location, so it's likely they'll release product videos instead of a live event, similar to what they did with the M4 Mac last November.\n"
         + "4. Bella: That makes sense. What are the main products they're expected to launch?\n"

@@ -255,11 +255,13 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
 
     task_payload = {
         "title": f"【{str(max_index + 1)}】" + title[:50],
-        "shownotes": shownotes
-        + "<p>   </p><p>   </p>"
-        + "<p>"
-        + os.getenv("tail")
-        + "</p>",
+        "shownotes": shownotes.replace(
+            "a big deal", "a_big deal"
+        )  # 逆天敏感词==>a big deal
+        + "<p>   </p><p>   </p>",
+        # + "<p>"
+        # + os.getenv("tail")
+        # + "</p>",
         "pid": os.getenv("bella_pid"),
         "audioFile": audioFile,
         "image": image,
@@ -270,6 +272,7 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
         logger.error(
             colored(f"3. 最终任务上传失败:{response}. {response.json()}", "red")
         )
+        logger.error(colored(f"payload:\n{task_payload}", "red"))
         return False
     logger.info(colored(f"3. create 任务成功", "green"))
 

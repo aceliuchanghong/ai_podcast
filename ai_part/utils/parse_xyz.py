@@ -1,4 +1,4 @@
-def parse_json2xyz(json_data, max_length=4700):
+def parse_json2xyz(json_data, max_length=4700) -> str:
     """
     Convert a list of JSON objects to a formatted string.
 

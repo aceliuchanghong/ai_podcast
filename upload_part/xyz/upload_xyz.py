@@ -174,6 +174,14 @@ def upload_pic(access_token, img_file_path, wav_file_path) -> bool:
     response = requests.post(
         create_url, headers={"x-jike-access-token": access_token}, json=all_create
     )
+    if response.status_code != 200:
+        logger.error(
+            colored(
+                f"图片create失败:{response} {response.json()}",
+                "red",
+            )
+        )
+        return False
     logger.info(colored(f"3. create 任务成功", "green"))
     # 数据库更新
     execute_sqlite_sql(update_detail_pic_sql, (wav_file_path,))

@@ -25,6 +25,7 @@ from refresh_token import refersh_xyz
 from ai_part.tts.kokoro_by_deepinfra import compute_mdhash_id
 from ai_part.utils.sql_sentence import *
 from ai_part.utils.check_db import execute_sqlite_sql
+from upload_part.xyz.delete_files import delete_pic_files, delete_wav_files
 
 
 def process_audio_generation_and_upload(api_key, model, max_retries=2):
@@ -71,12 +72,14 @@ def process_audio_generation_and_upload(api_key, model, max_retries=2):
 
     # 2. 上传wav文件
     logger.info(colored(f"2. 开始上传wav...", "green"))
+    delete_wav_files()
     if execute_sqlite_sql(select_already_up_wav_info_sql, (wav_file_path,))[0][0] != 1:
         if not try_upload(upload_wav, wav_file_path, operation_name="上传wav"):
             raise ValueError("WAV文件上传失败")
 
     # 3. 上传封面
     logger.info(colored(f"3. 开始上传封面...", "green"))
+    delete_pic_files()
     if execute_sqlite_sql(select_already_up_pic_info_sql, (wav_file_path,))[0][0] != 1:
         if not try_upload(
             upload_pic, cover_file_path, wav_file_path, operation_name="上传封面"

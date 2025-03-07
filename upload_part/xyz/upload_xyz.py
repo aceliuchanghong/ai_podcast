@@ -258,10 +258,10 @@ def upload_task(access_token, task_notes_dict, file_md5_code) -> bool:
         "shownotes": shownotes.replace(
             "a big deal", "a_big deal"
         )  # 逆天敏感词==>a big deal
-        + "<p>   </p><p>   </p>",
-        # + "<p>"
-        # + os.getenv("tail")
-        # + "</p>",
+        + "<p>   </p><p>   </p>"
+        + "<p>"
+        + os.getenv("tail")
+        + "</p>",
         "pid": os.getenv("bella_pid"),
         "audioFile": audioFile,
         "image": image,
